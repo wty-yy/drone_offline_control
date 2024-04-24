@@ -2,20 +2,20 @@ import os
 os.environ['XLA_PYTHON_CLIENT_ALLOCATOR'] = 'platform'  # allocate GPU memory as needed
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parents[0]))
+sys.path.append(str(Path(__file__).parents[1]))
 from dt_model import GPTConfig, TrainConfig, GPT
 from parse_and_writer import parse_args_and_writer, logs
-from dataset import DatasetBuilder
+from DT.dataset import DatasetBuilder
 from utils.ckpt_manager import CheckpointManager
 from tqdm import tqdm
-from eval import Evaluator
+from DT.eval import Evaluator
 import numpy as np
 
 def train():
   ### Parse augment and TF Writer ###
   args, writer = parse_args_and_writer()
   ### Dataset ###
-  ds_builder = DatasetBuilder(args.path_dataset, args.seed)
+  ds_builder = DatasetBuilder(args.path_dataset, args.n_step, args.seed)
   train_ds = ds_builder.get_dataset(args.n_step, args.batch_size, args.num_workers)
   args.max_timestep = int(max(ds_builder.data['timestep']))
   args.steps_per_epoch = len(train_ds)
