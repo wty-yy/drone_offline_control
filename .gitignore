@@ -1,0 +1,5 @@
+*.hdf5
+__pycache__
+test*
+old*
+_DEBUG
