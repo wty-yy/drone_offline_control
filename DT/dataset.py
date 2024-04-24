@@ -5,9 +5,10 @@ from pathlib import Path
 import h5py
 
 class DatasetBuilder:
-  def __init__(self, path_dataset: str, seed=42):
+  def __init__(self, path_dataset: str, n_step: int = None, seed=42):
     torch.manual_seed(seed)
     self.path_dataset = str(path_dataset)
+    self.n_step = n_step
     self.data = None
     self.preload()
   
@@ -19,24 +20,42 @@ class DatasetBuilder:
     data['obs'], data['action'] = replay['observations'], replay['actions']
     n = self.datasize = len(data['obs'])
     print(replay.keys())
+    new_done_idx, count = [], 0
     data['done_idx'] = np.where(replay['terminals'] | replay['timeouts'])[0]
     ### Build return-to-go ###
     st = -1
     rtg = data['rtg'] = np.zeros((n,), np.float32)
     timestep = data['timestep'] = np.zeros(n, np.int32)
+    data_mask = np.zeros(len(timestep), np.bool_)
     for i in data['done_idx']:
-      for j in range(i, st, -1):
-        rtg[j] = replay['rewards'][j] + (0 if j == i else rtg[j+1])
-        timestep[j] = j - st
+      time_len = i - st
+      if self.n_step is None or time_len >= self.n_step:
+        for j in range(i, st, -1):
+          rtg[j] = replay['rewards'][j] + (0 if j == i else rtg[j+1])
+          timestep[j] = j - st
+        data_mask[st+1:i+1] = True
+        count += time_len
+        new_done_idx.append(count-1)
       st = i
+    for k, v in data.items():
+      if k != 'done_idx':
+        data[k] = v[data_mask]
+      else:
+        data[k] = np.array(new_done_idx, np.int32)
+    episode_len = self.data['timestep'][self.data['done_idx']]
     data['info'] = f"\
-Max rtg: {max(data['rtg'])}, Mean rtg: {np.mean(data['rtg'])}, Max timestep: {max(data['timestep'])},\
+Max rtg: {max(data['rtg'])}, Mean rtg: {np.mean(data['rtg'])}, Min episode len: {min(episode_len)}, Max timestep: {max(episode_len)},\
 Vocab size: {data['action'].shape[-1]}, Total steps: {len(data['obs'])}"
     print(data['info'])
   
   def debug(self):
     import matplotlib.pyplot as plt
-    plt.hist(self.data['rtg'])
+    # plt.subplot(1,2,1)
+    # plt.hist(self.data['rtg'])
+    # plt.subplot(1,2,2)
+    done_step = self.data['timestep'][self.data['done_idx']]
+    print(done_step)
+    plt.hist(done_step)
     plt.show()
     for i in range(4):
       action = self.data['action'][...,i]
@@ -57,7 +76,7 @@ class StateActionReturnDataset(Dataset):
     self.data, self.n_step = data, n_step
   
   def __len__(self):
-    return len(self.data['obs']) - self.n_step - 1
+    return np.sum(self.data['timestep']!=0) - self.n_step - 1
   
   def __getitem__(self, idx):
     n_step, data = self.n_step, self.data
@@ -73,11 +92,11 @@ class StateActionReturnDataset(Dataset):
     return s, a, rtg, timestep
   
 if __name__ == '__main__':
-  path_dataset = str(Path(__file__).parent / "dataset/sim_data.hdf5")
-  ds_builder = DatasetBuilder(path_dataset)
+  path_dataset = str(Path(__file__).parents[1] / "dataset/sim_data.hdf5")
+  ds_builder = DatasetBuilder(path_dataset, n_step=30)
   ds_builder.debug()
   ds = ds_builder.get_dataset(30, 128)
   from tqdm import tqdm
   for s, a, rtg, timestep in tqdm(ds):
     print(s.shape, a.shape, rtg.shape, timestep.shape)
-    break
+    # break

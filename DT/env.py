@@ -18,7 +18,7 @@ class Env:
   
   def step(self, action):
     # TODO: Do one step, return state, reward, terminal
-    # return s, r, t
+    # return s, r, terminal
     raise NotImplementedError()  # Remove this
     
 if __name__ == '__main__':
@@ -27,5 +27,5 @@ if __name__ == '__main__':
   s = env.reset()
   done = False
   while not done:
-    action = np.random.randint(1, 3, (3,))
+    action = np.random.randint(0, 2, (4,))
     s, r, done = env.step(action)
