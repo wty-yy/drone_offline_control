@@ -194,7 +194,9 @@ class GPT(nn.Module):
           pred.append(jnp.argmax(pd_a, -1))
         else:
           pred.append(jax.random.categorical(rng, pd_a, -1))
-      return jnp.array(pred)
+        pred[-1] = pred[-1].reshape(-1, 1)
+      pred = jnp.concatenate(pred, -1)
+      return pred
     self.predict = jax.jit(predict, static_argnames='deterministic')
 
   def save_model(self, state, save_path):

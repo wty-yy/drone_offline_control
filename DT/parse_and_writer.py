@@ -47,7 +47,8 @@ def parse_args_and_writer(input_args=None, with_writer=True) -> tuple[argparse.N
   if args.wandb:
     import wandb
     wandb.init(
-      project="Decision Transformer",
+      project="drone control",
+      entity="vainglory",
       sync_tensorboard=True,
       config=vars(args),
       name=args.run_name,

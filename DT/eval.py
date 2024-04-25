@@ -34,12 +34,12 @@ class Evaluator:
   
   def __call__(self, state: train_state.TrainState, n_test: int = 10, rtg: int = 90, deterministic=False):
     self.state, self.deterministic = state, deterministic
-    score = [], []
+    score = []
     for i in range(n_test):
       score.append(0)
       s = self.env.reset()
-      done, timestep = False, 0
-      self.s, self.a, self.rtg, self.timestep = [s], [np.zeros(self.action_dim)], [rtg], [0]
+      done, timestep = False, 1
+      self.s, self.a, self.rtg, self.timestep = [s], [np.zeros(self.action_dim)], [rtg], [1]
       while not done:
         a = self.get_action()
         s, r, done = self.env.step(a)
@@ -49,7 +49,7 @@ class Evaluator:
         # self.rtg.append(max(self.rtg[-1] - r, 1))
         timestep = min(timestep + 1, self.model.cfg.max_timestep - 1)
         self.timestep.append(timestep)
-        ret[-1] += int(r > 0); score[-1] += r
+        score[-1] += r
       print(f"epoch {i} with score {score[-1]}, timestep {len(self.s)}")
     return score
 
@@ -72,8 +72,8 @@ class LoadToEvaluate:
 
 if __name__ == '__main__':
   path_weights = r"../logs/DT_wty__Breakout__1__20240325_141559/ckpt"
-  load_step = 2
+  load_step = 10
   lte = LoadToEvaluate(path_weights, load_step)
-  ret, score = lte.evaluate(n_test=10, rtg=90, deterministic=False)
-  print(ret, score)
-  print(np.mean(ret), np.mean(score))  # avg score: 58.0
+  score = lte.evaluate(n_test=10, rtg=90, deterministic=False)
+  print("score =", score)
+  print(np.mean(score))
