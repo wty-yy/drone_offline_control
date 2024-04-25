@@ -11,7 +11,7 @@ def parse_args_and_writer(input_args=None, with_writer=True) -> tuple[argparse.N
   parser.add_argument("--seed", type=int, default=0)
   parser.add_argument("--wandb", type=str2bool, default=False, const=True, nargs='?')
   ### Training ###
-  parser.add_argument("--learning-rate", type=float, default=6e-4)
+  parser.add_argument("--learning-rate", type=float, default=1e-3)
   parser.add_argument("--total-epochs", type=int, default=10)
   parser.add_argument("--batch-size", type=int, default=128)
   ### Model ###
@@ -23,8 +23,6 @@ def parse_args_and_writer(input_args=None, with_writer=True) -> tuple[argparse.N
   parser.add_argument("--rtg", type=float, default=20, help="Return To GO")
   ### Dataset ###
   parser.add_argument("--dataset-name", type=str, default="sim_data.hdf5", help="The dataset name in directory ROOT/dataset/")
-  parser.add_argument("--dataset-step", type=int, default=500000, help="The number of step samples from replay buffer")
-  parser.add_argument("--traj-per-buffer", type=int, default=10, help="The number of trajectory samples from each replay buffer")
   parser.add_argument("--num-workers", type=int, default=4)
 
   args = parser.parse_args(input_args)
