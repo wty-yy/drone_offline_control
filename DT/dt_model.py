@@ -174,7 +174,7 @@ class GPT(nn.Module):
           tmp = -jax.nn.log_softmax(pd_a).reshape(-1, pd_a.shape[-1])
           loss += tmp[jnp.arange(tmp.shape[0]), gt_a.reshape(-1)].mean()
           acc[i] = (jnp.argmax(pd_a, -1) == gt_a).mean()
-        return loss / 3, acc
+        return loss / action_dim, acc
       (loss, acc), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
       state = state.apply_gradients(grads=grads)
       state = state.replace(dropout_rng=base_rng)
