@@ -1,7 +1,7 @@
 from env import Env
 from dt_model import GPT
 from flax.training import train_state
-import cv2, jax
+import jax
 import numpy as np
 
 class Evaluator:
