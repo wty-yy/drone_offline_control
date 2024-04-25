@@ -33,14 +33,14 @@ class GPTConfig(Config):
 class TrainConfig(Config):
   obs_dim = 20
   seed = 42
-  weight_decay = 0.1
+  weight_decay = 1e-4  # 0.1
   lr = 6e-4
   total_epochs = 5
   batch_size = 128
   betas = (0.9, 0.95)  # Adamw beta1, beta2
   # warmup_tokens = 128*128*256  # 375e6
   warmup_tokens = 512*20  # 375e6
-  clip_global_norm = 0.1
+  clip_global_norm = 1.0
   lr_fn: Callable
 
   def __init__(self, steps_per_epoch, n_token, **kwargs):
@@ -168,13 +168,13 @@ class GPT(nn.Module):
         logits = state.apply_fn({'params': params}, s, a, rtg, timestep, train=train, rngs={'dropout': dropout_rng})
         logits = logits[:, 1::3, :]  # (B, l, N_e)
         action_dim = len(self.cfg.n_actions)
-        loss, acc = 0, 0
+        loss, acc = 0, [0] * action_dim
         for i, (gt_a, pd_a) in enumerate(zip(jnp.transpose(y, [2,0,1]), jnp.array_split(logits, action_dim, -1))):
           # gt_a.shape=(B,l), pd_a.shape=(B,l,action_size)
           tmp = -jax.nn.log_softmax(pd_a).reshape(-1, pd_a.shape[-1])
           loss += tmp[jnp.arange(tmp.shape[0]), gt_a.reshape(-1)].mean()
-          acc += ((jnp.argmax(pd_a, -1) == gt_a).mean() - acc) / (i+1)
-        return loss, acc
+          acc[i] = (jnp.argmax(pd_a, -1) == gt_a).mean()
+        return loss / 3, acc
       (loss, acc), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
       state = state.apply_gradients(grads=grads)
       state = state.replace(dropout_rng=base_rng)

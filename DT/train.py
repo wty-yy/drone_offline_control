@@ -36,13 +36,13 @@ def train():
     print(f"Epoch: {ep+1}/{args.total_epochs}")
     print("Training...")
     logs.reset()
-    bar = tqdm(train_ds, ncols=80)
+    bar = tqdm(train_ds, ncols=120)
     for s, a, rtg, timestep in bar:
       s, a, rtg, timestep = s.numpy(), a.numpy(), rtg.numpy(), timestep.numpy()
       # Look out the target is same as `a`, since we want to predict s[i] -> a[i]
       state, (loss, acc) = model.model_step(state, s, a, rtg, timestep, a, train=True)
-      logs.update(['train_loss', 'train_acc'], [loss, acc])
-      bar.set_description(f"loss={loss:.4f}, acc={acc:.4f}")
+      logs.update(['train_loss', *[f'train_acc{i+1}' for i in range(4)]], [loss, *acc])
+      bar.set_description(f"loss={loss:.4f}, acc={','.join([f'{a:.4f}' for a in acc])}")
       if state.step % write_tfboard_freq == 0:
         logs.update(
           ['SPS', 'epoch', 'learning_rate'],

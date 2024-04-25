@@ -58,7 +58,10 @@ def parse_args_and_writer(input_args=None, with_writer=True) -> tuple[argparse.N
 logs = Logs(
   init_logs={
     'train_loss': MeanMetric(),
-    'train_acc': MeanMetric(),
+    'train_acc1': MeanMetric(),
+    'train_acc2': MeanMetric(),
+    'train_acc3': MeanMetric(),
+    'train_acc4': MeanMetric(),
     'eval_score': MeanMetric(),
     'SPS': MeanMetric(),
     'epoch': 0,
@@ -66,6 +69,6 @@ logs = Logs(
   },
   folder2name={
     'Metrics': ['learning_rate', 'SPS', 'epoch'],
-    'Charts': ['train_loss', 'train_acc', 'eval_score'],
+    'Charts': ['train_loss', 'train_acc1', 'train_acc2', 'train_acc3', 'train_acc4', 'eval_score'],
   }
 )
